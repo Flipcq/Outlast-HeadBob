@@ -1,0 +1,4 @@
+# Generated packages / reports (large, reproducible from the tools)
+build/
+__pycache__/
+*.pyc

@@ -1,0 +1,149 @@
+State Group	ID	Name			Wwise Object Path	Notes
+	80790557	FEAR_STATE			\Default Work Unit\NEW STATES\FEAR_STATE	
+	123612387	Plastic_room			\OL_STATES\Plastic_room	
+	232215617	NIGHTVISION_on_off			\OL_STATES\NIGHTVISION_on_off	
+	306800208	CAMERA			\OL_STATES\CAMERA	
+	773231660	ST_Amb_quiet			\OL_STATES\ST_Amb_quiet	
+	943082062	CINEMATIC_Mode			\OL_STATES\CINEMATIC_Mode	
+	1083142259	CAM_LOST			\OL_STATES\CAM_LOST	
+	1543518578	NPCs_AI			\OL_STATES\NPCs_AI	
+	1601474789	Inside_Outside			\OL_STATES\Inside_Outside	
+	1609875683	FINAL_HURT_STATE			\OL_STATES\FINAL_HURT_STATE	
+	2709100573	AI_State			\OL_STATES\AI_State	
+	3438831509	Loading_State			\OL_STATES\Loading_State	
+	3687372670	CAM_USE			\OL_STATES\CAM_USE	
+	3753286132	CALM			\OL_STATES\CALM	
+
+State	ID	Name	State Group			Notes
+	289893324	FEAR_MED	FEAR_STATE			
+	748895195	None	FEAR_STATE			
+	3581371272	FEAR_NONE	FEAR_STATE			
+	3947163976	FEAR_LOW	FEAR_STATE			
+	4048132094	FEAR_HIGH	FEAR_STATE			
+	748895195	None	Plastic_room			
+	2024953314	plastic_room_Out	Plastic_room			
+	2786961135	plastic_room_In	Plastic_room			
+	748895195	None	NIGHTVISION_on_off			
+	2203837015	NV_OFF	NIGHTVISION_on_off			
+	3952277411	NV_ON	NIGHTVISION_on_off			
+	748895195	None	CAMERA			
+	3677392886	Camera_OFF	CAMERA			
+	3749777185	NightVision	CAMERA			
+	3897109560	Camera_ON	CAMERA			
+	329402434	ST_Amb_quiet_off	ST_Amb_quiet			
+	748895195	None	ST_Amb_quiet			
+	1750810052	ST_Amb_quiet_on	ST_Amb_quiet			
+	748895195	None	CINEMATIC_Mode			
+	1838596016	Cinematic	CINEMATIC_Mode			
+	2967546505	In_Game	CINEMATIC_Mode			
+	162455452	Cam_Back	CAM_LOST			
+	748895195	None	CAM_LOST			
+	1083142259	Cam_Lost	CAM_LOST			
+	748895195	None	NPCs_AI			
+	1363589390	NPCs_Idle	NPCs_AI			
+	1515481889	NPCs_Investigate	NPCs_AI			
+	2565040818	NPCs_Chase	NPCs_AI			
+	438105790	Outside	Inside_Outside			
+	748895195	None	Inside_Outside			
+	3553349781	Inside	Inside_Outside			
+	120664929	FINAL_HURT	FINAL_HURT_STATE			
+	748895195	None	FINAL_HURT_STATE			
+	3665574850	NORMAL_HURT_STATE	FINAL_HURT_STATE			
+	289043827	C_Chase	AI_State			
+	450625815	A_Patrol	AI_State			
+	748895195	None	AI_State			
+	1400291313	B_Investigate	AI_State			
+	4291110822	Z_None	AI_State			
+	263907067	LOADING_MODE	Loading_State			
+	748895195	None	Loading_State			
+	975388701	GAMEPLAY_MODE	Loading_State			
+	489779954	CAM_ON	CAM_USE			
+	748895195	None	CAM_USE			
+	4007133160	CAM_OFF	CAM_USE			
+	748895195	None	CALM			
+	1347033313	Normal_Amb	CALM			
+	1698691402	Quiet_Amb	CALM			
+
+Custom State	ID	Name	State Group	Owner		Notes
+	81913518	Cam_Lost	CAM_LOST	\Master-Mixer Hierarchy\Default Work Unit\Master Control Bus\In_Game\Reverb		
+	206050526	ST_Amb_quiet_on	ST_Amb_quiet	\Master-Mixer Hierarchy\Default Work Unit\Master Control Bus\In_Game\Ambiance		
+	559467408	ST_Amb_quiet_on	ST_Amb_quiet	\Master-Mixer Hierarchy\Default Work Unit\Master Control Bus\In_Game\Reverb		
+	612221171	ST_Amb_quiet_on	ST_Amb_quiet	\Master-Mixer Hierarchy\Default Work Unit\Master Control Bus\In_Game\Voice_Miles		
+	631657487	ST_Amb_quiet_on	ST_Amb_quiet	\Master-Mixer Hierarchy\Default Work Unit\Master Control Bus\In_Game\SFX		
+	729786875	LOADING_MODE	Loading_State	\Master-Mixer Hierarchy\Default Work Unit\Master Control Bus\In_Game		
+	815010974	NightVision	CAMERA	\Master-Mixer Hierarchy\Default Work Unit\Master Control Bus\In_Game\Ambiance		
+	830185239	Cinematic	CINEMATIC_Mode	\Master-Mixer Hierarchy\Default Work Unit\Master Control Bus\In_Game\Ambiance		
+	1022845664	ST_Amb_quiet_on	ST_Amb_quiet	\Master-Mixer Hierarchy\Default Work Unit\Master Control Bus\In_Game\Voice		
+
+Game Parameter	ID	Name			Wwise Object Path	Notes
+	49941299	RTPC_TortureFlashBack			\OL_RTPCs\RTPC_TortureFlashBack	
+	848835168	Zoom			\OL_RTPCs\Zoom	
+	1121425747	RTPC_FadeToBlack			\OL_RTPCs\RTPC_FadeToBlack	
+	2129150073	Light_Cam_Intensity			\OL_RTPCs\Light_Cam_Intensity	
+	3240481082	Cam_Glitch			\OL_RTPCs\Cam_Glitch	
+	3677180323	HEALTH			\OL_RTPCs\HEALTH	
+	4179668880	MASTER_VOLUME			\OL_RTPCs\MASTER_VOLUME	
+
+Audio Bus	ID	Name			Wwise Object Path	Notes
+	247557814	Foley			\Default Work Unit\Master Control Bus\In_Game\Foley	
+	348963605	Reverb			\Default Work Unit\Master Control Bus\In_Game\Reverb	
+	393239870	SFX			\Default Work Unit\Master Control Bus\In_Game\SFX	
+	805203703	Master Secondary Bus			\Default Work Unit\Master Secondary Bus	
+	1799467707	Music_Interactive			\Default Work Unit\Master Control Bus\In_Game\Music_Interactive	
+	1868063367	Voice_Patient			\Default Work Unit\Master Control Bus\In_Game\Voice_Patient	
+	2607556080	Menu			\Default Work Unit\Master Control Bus\Menu	
+	2967546505	In_Game			\Default Work Unit\Master Control Bus\In_Game	
+	2981377429	Ambiance			\Default Work Unit\Master Control Bus\In_Game\Ambiance	
+	3170124113	Voice			\Default Work Unit\Master Control Bus\In_Game\Voice	
+	3304373420	Health_Bus			\Default Work Unit\Master Control Bus\Health_Bus	
+	3444197610	Master Control Bus			\Default Work Unit\Master Control Bus	
+	3635247490	Voice_Miles			\Default Work Unit\Master Control Bus\In_Game\Voice_Miles	
+	3991942870	Music			\Default Work Unit\Master Control Bus\In_Game\Music	
+
+Auxiliary Bus	ID	Name			Wwise Object Path	Notes
+	19698951	Prison_Cell			\Default Work Unit\Master Control Bus\In_Game\Reverb\Prison_Cell	
+	235209853	Prison_Corridor			\Default Work Unit\Master Control Bus\In_Game\Reverb\Prison_Corridor	
+	273228969	Sewer_VeryLarge_Hall			\Default Work Unit\Master Control Bus\In_Game\Reverb\Sewer_VeryLarge_Hall	
+	300041896	Bathroom_Space			\Default Work Unit\Master Control Bus\In_Game\Reverb\Bathroom_Space	
+	378221124	Air_Vent_Space			\Default Work Unit\Master Control Bus\In_Game\Reverb\Air_Vent_Space	
+	493686582	Prison_Hall			\Default Work Unit\Master Control Bus\In_Game\Reverb\Prison_Hall	
+	1500565067	Hall_Space			\Default Work Unit\Master Control Bus\In_Game\Reverb\Hall_Space	
+	1738107399	Rvrb_Corridor_plastic			\Default Work Unit\Master Control Bus\In_Game\Reverb\Rvrb_Corridor_plastic	
+	1850352260	Exterior_Space			\Default Work Unit\Master Control Bus\In_Game\Reverb\Exterior_Space	
+	2017225829	Office_Room_Large			\Default Work Unit\Master Control Bus\In_Game\Reverb\Office_Room_Large	
+	2025018532	Corridor_Space			\Default Work Unit\Master Control Bus\In_Game\Reverb\Corridor_Space	
+	2377455293	Office_Room_Small			\Default Work Unit\Master Control Bus\In_Game\Reverb\Office_Room_Small	
+	2541245538	Locker_Space			\Default Work Unit\Master Control Bus\In_Game\Reverb\Locker_Space	
+	2804494601	Exterior_Verb			\Default Work Unit\Master Control Bus\In_Game\Reverb\Exterior_Verb	
+	3183974426	Sewer_Corridor			\Default Work Unit\Master Control Bus\In_Game\Reverb\Sewer_Corridor	
+	4001256341	Office_Room_Medium			\Default Work Unit\Master Control Bus\In_Game\Reverb\Office_Room_Medium	
+	4022384397	Sewer_Hall			\Default Work Unit\Master Control Bus\In_Game\Reverb\Sewer_Hall	
+	4131148755	Chapel_Space			\Default Work Unit\Master Control Bus\In_Game\Reverb\Chapel_Space	
+
+Effect plug-ins	ID	Name	Type				Notes
+	49062086	FOLEY__EQ	Wwise Parametric EQ			
+	69289078	HIGH_PASS_MUSIC (Define custom)	Wwise Parametric EQ			
+	69568896	VOICE_MILES_COMP (Define custom)	Wwise Compressor			
+	186459741	HIGH_PASS_MUSIC (Define custom)	Wwise Parametric EQ			
+	233480707	REV_Prison_Corridor (Define custom)	Wwise RoomVerb			
+	290455014	Locker_V	Wwise RoomVerb			
+	297618142	Med_Room_V (Define custom)	Wwise RoomVerb			
+	339342772	Exterior_V	Wwise RoomVerb			
+	355113453	MASTER_METER	Wwise Meter			
+	496696208	COMP_Music	Wwise Compressor			
+	502782037	VOICE_METER (Define custom)	Wwise Meter			
+	549252104	Large_Room_V (Define custom)	Wwise RoomVerb			
+	557484121	JAIL_HALL_VERB (Define custom)	Wwise RoomVerb			
+	627340962	Small_Room_V (Define custom)	Wwise RoomVerb			
+	671799509	Verb_Sewer_VeryLarge_Hall	Wwise RoomVerb			
+	802828664	Corridor_V (Define custom)	Wwise RoomVerb			
+	930517762	Prison_Hall_Verb	Wwise RoomVerb			
+	1029101926	Sewer_Corridor_Verb	Wwise RoomVerb			
+	1341050105	AirVent_V	Wwise RoomVerb			
+	1403374443	DLC_Master_Compressor	Wwise Compressor			
+	1738107399	Rvrb_Corridor_plastic	Wwise RoomVerb			
+	1831461191	Bathroom	Wwise RoomVerb			
+	3819518727	Hall_V	Wwise RoomVerb			
+	4022384397	Sewer_Hall	Wwise RoomVerb			
+	4226264556	Chapel_Verb	Wwise RoomVerb			
+

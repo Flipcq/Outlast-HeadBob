@@ -91,6 +91,14 @@ No pacote, esses objetos existem de fato dentro do `OLGame.upk`:
 
 * `Hero-01_AS` (AnimSet, 360 sequências) — todas as animações do jogador.
 * `Hero_SE` (AnimSet, 21 sequências) — eventos scriptados.
+* `Player_AnimTree` (AnimTree, ~200 nós).
+
+Na hierarquia do SkeletalMesh `Miles_beheaded` (export 13880), o osso
+`Hero-Camera` tem **parent index 0**, ou seja, é filho direto de `Hero-Root`.
+Ele não está pendurado em `Hero-Head`/`Hero-Neck`. Isso é importante: a
+translação da câmera é relativa ao root e **não herda** o movimento de pelve,
+coluna, pescoço ou cabeça. Portanto, achatar a trilha da câmera remove o bob por
+completo, sem precisar mexer no corpo.
 
 
 ## 3. A prova: o AnimSet manda animar a translação da câmera

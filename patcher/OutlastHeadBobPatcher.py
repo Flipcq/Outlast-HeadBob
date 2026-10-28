@@ -934,6 +934,17 @@ def ensure_backup(pkg_path: str, base_dir: str, log=None) -> str:
     if os.path.isfile(backup):
         if os.path.getsize(backup) <= 0:
             raise PatchError("O backup existe mas esta vazio. Restaure o jogo pela Steam.")
+        if log:
+            log("Verificando o backup existente...")
+        backup_data = load_patchable_bytes(backup, base_dir, log)
+        backup_stats = analyze_bytes(backup_data)
+        if backup_stats["patched"]:
+            raise PatchError(
+                "O backup '%s' parece ja estar modificado (um grupo inteiro de "
+                "animações está sem balanço).\n\nApague o backup e restaure o "
+                "OLGame.upk pela Steam antes de continuar."
+                % os.path.basename(backup)
+            )
         return backup
 
     if os.path.isfile(state):

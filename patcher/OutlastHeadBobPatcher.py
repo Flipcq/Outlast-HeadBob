@@ -4,32 +4,31 @@
 Outlast - Head Bob Patcher
 ==========================
 
-Remove o head bob (balanco da camera) do Outlast editando os keyframes da bone
-"Hero-Camera" dentro do OLGame.upk (pacote seekfree que contem as animacoes do
-Miles).
+Removes head bob from Outlast by editing the keyframes of the "Hero-Camera" bone
+inside OLGame.upk (seekfree package containing Miles's animations).
 
-Como o jogo funciona (resumo):
-  * OLPlayerController.GetPlayerViewPoint() chama OLHero.GetCamera() (nativo).
-  * OLHeroCamera.Update() le a posicao/rotacao da bone "Hero-Camera" direto da
-    animacao (Mesh.GetBoneLocation/GetBoneQuaternion) e aplica shakes/neck offset.
-  * Logo, o balanco de caminhada/corrida/respiracao esta gravado nos keyframes de
-    translacao (e rotacao) dessa bone nos AnimSequence do AnimSet
-    "03_Hero.Hero-01_AS", que vive dentro de OLGame.upk.
+How the game works (summary):
+  * OLPlayerController.GetPlayerViewPoint() calls OLHero.GetCamera() (native).
+  * OLHeroCamera.Update() reads the "Hero-Camera" bone location/rotation directly
+    from the animation (Mesh.GetBoneLocation/GetBoneQuaternion) and applies
+    shakes/neck offset.
+  * Therefore, the walk/run/breathing bob is stored in the keyframes of this
+    bone in the AnimSequence of the AnimSet "03_Hero.Hero-01_AS", inside OLGame.upk.
 
-O patcher achata (deixa constante) esses keyframes apenas nas animacoes
-escolhidas, sem mudar tamanhos, offsets ou qualquer outro dado do pacote.
+The patcher flattens (sets constant) these keyframes only for the chosen
+animations, without changing sizes, offsets, or any other package data.
 
-Uso:
+Usage:
   GUI:  python OutlastHeadBobPatcher.py
   CLI:  python OutlastHeadBobPatcher.py --cli --package OLGame.upk --mode default --breathing
 
-Requisitos:
-  * Python 3.8+ (tkinter para a GUI).
-  * Se o OLGame.upk estiver comprimido, o "decompress.exe" (Gildor's PackageUnpack,
-    incluido nesta pasta) precisa estar ao lado deste script.
+Requirements:
+  * Python 3.8+ (tkinter for GUI).
+  * If OLGame.upk is compressed, "decompress.exe" (Gildor's PackageUnpack,
+    included in this folder) must be next to this script.
 
-O arquivo OLGame.upk original e salvo como "OLGame.upk.backup" na primeira
-aplicacao. "Restaurar arquivo original" renomeia o backup de volta.
+The original OLGame.upk is saved as "OLGame.upk.backup" on first
+application. "Restore original file" renames the backup back.
 """
 
 from __future__ import annotations
@@ -82,60 +81,56 @@ WALK_RUN_DEFAULT = {
 MODE_ORDER = ["default", "walk_run_all", "walk", "run", "all"]
 
 MODE_LABELS = {
-    "default": "Caminhada + Corrida (padrão)",
-    "walk_run_all": "Caminhada + Corrida (todas)",
-    "walk": "Somente caminhada",
-    "run": "Somente corrida",
-    "all": "Todas as animações",
+    "default": "Walk + Run (default)",
+    "walk_run_all": "Walk + Run (all)",
+    "walk": "Walk only",
+    "run": "Run only",
+    "all": "All animations",
 }
 
 MODE_DESCRIPTIONS = {
     "default": (
-        "Remove o balanço apenas dos ciclos normais de caminhada e corrida "
-        "(frente, trás, laterais e variantes na água). Recomendado para jogar "
-        "sem enjoo, sem mexer em pulos, quedas ou interações."
+        "Removes bob only from normal walk and run cycles "
+        "(forward, backward, strafes, and water variants). Recommended for playing "
+        "without motion sickness, without touching jumps, falls, or interactions."
     ),
     "walk_run_all": (
-        "Remove de TODAS as animações que tenham 'walk' ou 'run' no nome, "
-        "incluindo andar agachado, mancando, ferido, escadas, pulos e "
-        "transições (qualquer animação com walk/run)."
+        "Removes bob from ALL animations that have 'walk' or 'run' in the name, "
+        "including crouching, limping, injured, stairs, jumps, and "
+        "transitions (any animation with walk/run)."
     ),
     "walk": (
-        "Todas as animações de caminhada ('walk'), incluindo variantes "
-        "(água, mancando, ferido) e transições."
+        "All walk animations ('walk'), including variants "
+        "(water, limping, injured) and transitions."
     ),
     "run": (
-        "Todas as animações de corrida ('run'), incluindo variantes "
-        "(mancando) e transições."
+        "All run animations ('run'), including variants "
+        "(limping) and transitions."
     ),
     "all": (
-        "Remove o balanço de TODAS as animações do Miles (idle, walk, run, "
-        "crouch, pulos, quedas, interações, fatalities). Remoção máxima; pode "
-        "alterar animações scriptizadas de gameplay."
+        "Removes bob from ALL Miles animations (idle, walk, run, "
+        "crouch, jumps, falls, interactions, fatalities). Maximum removal; may "
+        "alter scripted gameplay animations."
     ),
 }
 
 BREATHING_DESCRIPTION = (
-    "Elimina o balanço de respiração quando o Miles está parado (idle), "
-    "incluindo agachado, encostado, na cama, dentro do armário e com a câmera "
-    "na mão. Recomendado."
+    "Eliminates breathing camera shake when Miles is idle (standing still), "
+    "including crouched, leaning, in bed, inside a locker, or holding the "
+    "camera. Recommended."
 )
-
-
-class PatchError(Exception):
-    """Erro esperado, mostrado ao usuario sem traceback."""
-
-
-def _align4(n: int) -> int:
-    return (n + 3) & ~3
-
-
-def _f32(data: bytes, off: int) -> float:
-    return struct.unpack_from("<f", data, off)[0]
 
 # ---------------------------------------------------------------------------
 # Leitor de pacotes UE3 (Outlast: versao 868, licensee 3)
 # ---------------------------------------------------------------------------
+
+
+class PatchError(Exception):
+    """Expected error, shown to user without traceback."""
+
+
+def _align4(n: int) -> int:
+    return (n + 3) & ~3
 
 
 class Export:
@@ -165,12 +160,12 @@ class Import:
 
 
 def read_package_header(data: bytes) -> dict:
-    """Le apenas o cabecalho (funciona tambem em pacotes comprimidos)."""
+    """Reads only the header (also works in compressed packages)."""
     if len(data) < 64:
-        raise PatchError("Arquivo muito pequeno para ser um .upk do Outlast.")
+        raise PatchError("File too small to be an Outlast .upk.")
     tag = struct.unpack_from("<I", data, 0)[0]
     if tag != 0x9E2A83C1:
-        raise PatchError("Tag de pacote inválida (não parece um .upk UE3).")
+        raise PatchError("Invalid package tag (does not look like a UE3 .upk).")
 
     version, licensee = struct.unpack_from("<HH", data, 4)
     header_size = struct.unpack_from("<i", data, 8)[0]
@@ -228,7 +223,7 @@ class UpkPackage:
         self.package_flags = self.header["package_flags"]
         if self.header["compressed"]:
             raise PatchError(
-                "O pacote está comprimido; ele precisa ser descomprimido antes "
+                "The package is compressed; it must be decompressed before "
                 "de ser lido/editado."
             )
         self.names = []
@@ -264,7 +259,7 @@ class UpkPackage:
                 names.append(raw[:-1].decode("latin-1"))
                 off += 4 + n
             else:
-                raise PatchError("Tabela de nomes invalida no .upk.")
+                raise PatchError("Invalid name table in .upk.")
             off += 8  # flags do nome (uint64)
         self.names = names
 
@@ -401,7 +396,7 @@ class UpkPackage:
             if best is None or score > best[0]:
                 best = (score, props, stop, ended, prefix)
         if best is None:
-            raise PatchError("Não foi possível ler as propriedades do objeto.")
+            raise PatchError("Could not read object properties.")
         _, props, stop, ended, prefix = best
         by_name = {}
         for prop in props:
@@ -417,13 +412,13 @@ def _read_name_array(pkg: UpkPackage, prop) -> list:
     data = pkg.data
     count = struct.unpack_from("<i", data, prop["value"])[0]
     if count < 0 or count > 4096:
-        raise PatchError("Array de nomes invalido.")
+        raise PatchError("Invalid name array.")
     out = []
     off = prop["value"] + 4
     for _ in range(count):
         index = struct.unpack_from("<i", data, off)[0]
         if index < 0 or index >= len(pkg.names):
-            raise PatchError("Indice de nome invalido.")
+            raise PatchError("Invalid name index.")
         out.append(pkg.names[index])
         off += 8
     return out
@@ -433,7 +428,7 @@ def _read_int_array(pkg: UpkPackage, prop) -> list:
     data = pkg.data
     count = struct.unpack_from("<i", data, prop["value"])[0]
     if count < 0 or count > 65536:
-        raise PatchError("Array de inteiros invalido.")
+        raise PatchError("Invalid integer array.")
     start = prop["value"] + 4
     return [struct.unpack_from("<i", data, start + 4 * i)[0] for i in range(count)]
 
@@ -500,25 +495,25 @@ def list_camera_tracks(pkg: UpkPackage, animset_export=None) -> list:
         animset_export = find_hero_animset(pkg)
     if animset_export is None:
         raise PatchError(
-            "AnimSet '%s' não encontrado no OLGame.upk. "
-            "O arquivo pode ser de outra versao do jogo." % ANIMSET_NAME
+            "AnimSet '%s' not found in OLGame.upk. "
+            "The file may be from another game version." % ANIMSET_NAME
         )
 
     data = pkg.data
     props, stop = pkg.parse_properties(animset_export)
     if "TrackBoneNames" not in props:
-        raise PatchError("AnimSet sem lista de bones (TrackBoneNames).")
+        raise PatchError("AnimSet without bone list (TrackBoneNames).")
     bone_names = _read_name_array(pkg, props["TrackBoneNames"][0])
     try:
         camera_index = [n.lower() for n in bone_names].index(CAMERA_BONE.lower())
     except ValueError:
         raise PatchError(
-            "A bone '%s' não existe no AnimSet. Formato de animação inesperado."
+            "Bone '%s' does not exist in AnimSet. Unexpected animation format."
             % CAMERA_BONE
         )
 
     if "Sequences" not in props:
-        raise PatchError("AnimSet sem lista de sequencias.")
+        raise PatchError("AnimSet without sequence list.")
     sequence_refs = _read_object_array(pkg, props["Sequences"][0])
 
     tracks = []
@@ -559,7 +554,7 @@ def list_camera_tracks(pkg: UpkPackage, animset_export=None) -> list:
         layout_error = ""
         if stream_count < 0 or stream_start + stream_count != export_end:
             layout_ok = False
-            layout_error = "tamanho do stream não confere"
+            layout_error = "stream size does not match"
         else:
             layout_ok, layout_error = _validate_layout(offsets, stream_count)
 
@@ -590,7 +585,7 @@ def track_matches(name: str, mode: str, breathing: bool) -> bool:
         return "_run_" in name
     if mode == "all":
         return True
-    raise PatchError("Modo de remoção desconhecido: %s" % mode)
+    raise PatchError("Unknown removal mode: %s" % mode)
 
 
 def count_tracks_for_mode(tracks: list, mode: str, breathing: bool) -> int:
@@ -710,7 +705,7 @@ def analyze_bytes(data: bytes) -> dict:
         if key == "all":
             stats["varying"] = varying
     # Um pacote original tem walk/run/idle balancando. Se um grupo inteiro
-    # ficou constante, o arquivo ja foi modificado por este (ou outro) patch.
+    # remained constant, the file was already modified by this (or another) patch.
     stats["patched"] = any(
         group["total"] >= 5 and group["flat"] == group["total"]
         for name, group in stats["groups"].items()
@@ -730,7 +725,7 @@ def patch_bytes(data: bytes, mode: str, breathing: bool, log=None) -> tuple:
         raise
     except Exception as exc:
         raise PatchError(
-            "Não foi possível ler o OLGame.upk como pacote UE3.\\n\\nErro: %s" % exc
+            "Could not read OLGame.upk as UE3 package.\\n\\nError: %s" % exc
         )
 
     try:
@@ -739,10 +734,10 @@ def patch_bytes(data: bytes, mode: str, breathing: bool, log=None) -> tuple:
         raise
     except Exception as exc:
         raise PatchError(
-            "Não foi possível localizar as animações da câmera no OLGame.upk.\\n\\nErro: %s" % exc
+            "Could not locate camera animations in OLGame.upk.\\n\\nError: %s" % exc
         )
     if not tracks:
-        raise PatchError("Nenhuma animação do herói foi encontrada no pacote.")
+        raise PatchError("No hero animations found in the package.")
 
     buf = bytearray(data)
     selected = [t for t in tracks if track_matches(t.sequence_name, mode, breathing)]
@@ -779,8 +774,8 @@ def patch_bytes(data: bytes, mode: str, breathing: bool, log=None) -> tuple:
 
     if selected and skipped_layout == len(selected):
         raise PatchError(
-            "Nenhuma das animações selecionadas usa o formato de tracks "
-            "esperado. O OLGame.upk pode ser de outra versão do jogo."
+            "None of the selected animations use the expected track format "
+            "expected. The OLGame.upk may be from another game version."
         )
 
     # Verificacao: nada selecionado pode continuar balancando.
@@ -791,14 +786,14 @@ def patch_bytes(data: bytes, mode: str, breathing: bool, log=None) -> tuple:
             dev = _max_translation_deviation(_translation_keys(buf, track))
             if dev > 0.01:
                 raise PatchError(
-                    "Falha na verificação: %s ainda tem bob de translação (%.4f)."
+                    "Verification failed: %s still has translation bob (%.4f)."
                     % (track.sequence_name, dev)
                 )
         if track.rot_keys > 1:
             dev = _max_rotation_deviation(_rotation_keys(buf, track))
             if dev > 0.1:
                 raise PatchError(
-                    "Falha na verificação: %s ainda tem bob de rotação (%.3f graus)."
+                    "Verification failed: %s still has rotation bob (%.3f graus)."
                     % (track.sequence_name, dev)
                 )
 
@@ -822,9 +817,9 @@ def _sha1(data: bytes) -> str:
 
 
 def _find_decompress_exe(base_dir: str) -> str:
-    """Localiza o decompress.exe ao lado do patcher ou do executável."""
+    """Locates decompress.exe next to the patcher or executable."""
     tried = []
-    # Pasta do script / executável atual
+    # Script directory / executable directory
     script_dir = os.path.dirname(os.path.abspath(__file__))
     # Quando rodando como PyInstaller onefile, sys.executable é o .exe externo
     exe_dir = os.path.dirname(os.path.abspath(sys.executable))
@@ -842,10 +837,10 @@ def _find_decompress_exe(base_dir: str) -> str:
             return os.path.join(d, "bin", DECOMPRESS_NAME)
 
     raise PatchError(
-        "O OLGame.upk está comprimido e o '%s' não foi encontrado.\n\n"
+        "OLGame.upk is compressed and '%s' was not found.\n\n"
         "Caminhos verificados:\n%s\n\n"
-        "Coloque o decompress.exe (Gildor's PackageUnpack, incluido na pasta "
-        "do patcher) na mesma pasta que este programa e tente novamente." % (
+        "Place decompress.exe (Gildor's PackageUnpack, included in the folder "
+        "do patcher) in the same folder as this program and try again." % (
             DECOMPRESS_NAME,
             "\n".join("  - " + c for c in tried),
         )
@@ -902,7 +897,7 @@ def _run_decompressor(pkg_path: str, base_dir: str, log) -> bytes:
                         return candidate_data
 
         raise PatchError(
-            "Não foi possível descomprimir o OLGame.upk.\n\n"
+            "Could not decompress OLGame.upk.\n\n"
             "Saída do decompress.exe:\n%s" % (last_output[-1500:] or "(vazia)")
         )
     finally:
@@ -926,17 +921,17 @@ def load_patchable_bytes(path: str, base_dir: str, log=None) -> bytes:
         with open(path, "rb") as handle:
             data = handle.read()
     except OSError as exc:
-        raise PatchError("Não foi possível abrir o OLGame.upk: %s" % exc)
+        raise PatchError("Could not open OLGame.upk: %s" % exc)
 
     try:
         header = read_package_header(data)
     except PatchError as exc:
         raise PatchError(
-            "Cabeçalho do OLGame.upk inválido (não parece um .upk do Outlast).\\n\\nErro: %s" % exc
+            "Invalid OLGame.upk header (does not look like an Outlast .upk).\\n\\nError: %s" % exc
         )
     except Exception as exc:
         raise PatchError(
-            "Não foi possível ler o cabeçalho do OLGame.upk.\\n\\nErro: %s" % exc
+            "Could not read OLGame.upk header.\\n\\nError: %s" % exc
         )
     if header["compressed"]:
         data = _run_decompressor(path, base_dir, log)
@@ -957,7 +952,7 @@ def _write_atomic(path: str, data: bytes):
     _PATCHABLE_CACHE.clear()
 
 # ---------------------------------------------------------------------------
-# Backup / aplicacao / restauracao
+# Backup / application / restore
 # ---------------------------------------------------------------------------
 
 
@@ -970,15 +965,15 @@ def state_path_for(pkg_path: str) -> str:
 
 
 def ensure_backup(pkg_path: str, base_dir: str, log=None) -> str:
-    """Cria OLGame.upk.backup apenas uma vez, a partir do arquivo original."""
+    """Creates OLGame.upk.backup only once, from the original file."""
     backup = backup_path_for(pkg_path)
     state = state_path_for(pkg_path)
 
     if os.path.isfile(backup):
         if os.path.getsize(backup) <= 0:
-            raise PatchError("O backup existe mas esta vazio. Restaure o jogo pela Steam.")
+            raise PatchError("Backup exists but is empty. Restore the game via Steam.")
         if log:
-            log("Verificando o backup existente...")
+            log("Verifying existing backup...")
         try:
             backup_data = load_patchable_bytes(backup, base_dir, log)
             backup_stats = analyze_bytes(backup_data)
@@ -986,27 +981,27 @@ def ensure_backup(pkg_path: str, base_dir: str, log=None) -> str:
             raise
         except Exception as exc:
             raise PatchError(
-                "Não foi possível ler o backup existente '%s'.\\n\\nErro: %s"
+                "Could not read existing backup '%s'.\n\nError: %s"
                 % (os.path.basename(backup), exc)
             )
         if backup_stats["patched"]:
             raise PatchError(
-                "O backup '%s' parece ja estar modificado (um grupo inteiro de "
-                "animações está sem balanço).\\n\\nApague o backup e restaure o "
-                "OLGame.upk pela Steam antes de continuar."
+                "Backup '%s' appears to already be modified (an entire group of "
+                "animations has no bob).\n\nDelete the backup and restore "
+                "OLGame.upk via Steam before continuing."
                 % os.path.basename(backup)
             )
         return backup
 
     if os.path.isfile(state):
         raise PatchError(
-            "Existe um registro de patch anterior, mas o backup '%s' não foi "
-            "encontrado.\\n\\nRestaure o OLGame.upk pela Steam (Verificar "
-            "integridade dos arquivos) antes de continuar." % os.path.basename(backup)
+            "A previous patch record exists, but backup '%s' was not "
+            "found.\n\nRestore OLGame.upk via Steam (Verify integrity "
+            "of game files) before continuing." % os.path.basename(backup)
         )
 
     if log:
-        log("Verificando o OLGame.upk original antes de criar o backup...")
+        log("Verifying original OLGame.upk before creating backup...")
     try:
         data = load_patchable_bytes(pkg_path, base_dir, log)
         stats = analyze_bytes(data)
@@ -1014,18 +1009,18 @@ def ensure_backup(pkg_path: str, base_dir: str, log=None) -> str:
         raise
     except Exception as exc:
         raise PatchError(
-            "Não foi possível ler o OLGame.upk.\\n\\nErro: %s" % exc
+            "Could not read OLGame.upk.\n\nError: %s" % exc
         )
     if stats["patched"]:
         raise PatchError(
-            "O OLGame.upk atual parece ja ter sido modificado (um grupo inteiro "
-            "de animações está sem balanço) e não existe backup.\\n\\n"
-            "Restaure o jogo pela Steam (Verificar integridade dos arquivos) "
-            "antes de aplicar o patch."
+            "Current OLGame.upk appears to already be modified (an entire group "
+            "of animations has no bob) and no backup exists.\n\n"
+            "Restore the game via Steam (Verify integrity of game files) "
+            "before applying the patch."
         )
 
     if log:
-        log("Criando backup: %s" % os.path.basename(backup))
+        log("Creating backup: %s" % os.path.basename(backup))
     shutil.copy2(pkg_path, backup)
 
     with open(pkg_path, "rb") as handle:
@@ -1033,7 +1028,7 @@ def ensure_backup(pkg_path: str, base_dir: str, log=None) -> str:
     with open(backup, "rb") as handle:
         backup_hash = _sha1(handle.read())
     if original_hash != backup_hash:
-        raise PatchError("Falha ao criar o backup (hash diferente). Nada foi alterado.")
+        raise PatchError("Failed to create backup (hash mismatch). Nothing was changed.")
 
     # Reaproveita os bytes ja descomprimidos/analisados na aplicacao seguinte.
     try:
@@ -1045,37 +1040,37 @@ def ensure_backup(pkg_path: str, base_dir: str, log=None) -> str:
         pass
 
     if log:
-        log("Backup criado com sucesso.")
+        log("Backup created successfully.")
     return backup
 
 
 def apply_patch(pkg_path: str, mode: str, breathing: bool, base_dir: str, log=None) -> dict:
     if not os.path.isfile(pkg_path):
-        raise PatchError("OLGame.upk não encontrado em:\n%s" % pkg_path)
+        raise PatchError("OLGame.upk not found at:\n%s" % pkg_path)
     if not os.access(pkg_path, os.R_OK):
-        raise PatchError("Sem permissao de leitura no OLGame.upk.")
+        raise PatchError("No read permission on OLGame.upk.")
 
     backup = ensure_backup(pkg_path, base_dir, log)
 
     if log:
-        log("Lendo o backup original...")
+        log("Reading original backup...")
     source_data = load_patchable_bytes(backup, base_dir, log)
 
     if log:
-        log("Aplicando patch (modo=%s, respiração=%s)..." % (mode, "sim" if breathing else "não"))
+        log("Applying patch (mode=%s, breathing=%s)..." % (mode, "yes" if breathing else "no"))
     patched_data, report = patch_bytes(source_data, mode, breathing, log)
 
     if log:
-        log("Gravando OLGame.upk modificado (%d bytes)..." % len(patched_data))
+        log("Writing patched OLGame.upk (%d bytes)..." % len(patched_data))
     try:
         _write_atomic(pkg_path, patched_data)
     except PermissionError:
         raise PatchError(
-            "Não foi possível gravar o OLGame.upk. Feche o Outlast (e o Steam, se "
-            "estiver com o jogo aberto) e tente novamente."
+            "Could not write OLGame.upk. Close Outlast (and Steam, if "
+            "the game is open) and try again."
         )
     except OSError as exc:
-        raise PatchError("Falha ao gravar o OLGame.upk:\n%s" % exc)
+        raise PatchError("Failed to write OLGame.upk:\n%s" % exc)
 
     state = {
         "app_version": APP_VERSION,
@@ -1091,15 +1086,15 @@ def apply_patch(pkg_path: str, mode: str, breathing: bool, base_dir: str, log=No
 
     if log:
         log("")
-        log("Patch aplicado com sucesso!")
-        log("  Animações selecionadas : %d" % report["selected"])
-        log("  Animações modificadas  : %d" % report["patched"])
-        log("  Keys de translação     : %d" % report["translation_keys_written"])
-        log("  Keys de rotação        : %d" % report["rotation_keys_written"])
+        log("Patch applied successfully!")
+        log("  Animations selected : %d" % report["selected"])
+        log("  Animations modified  : %d" % report["patched"])
+        log("  Translation keys     : %d" % report["translation_keys_written"])
+        log("  Rotation keys        : %d" % report["rotation_keys_written"])
         if report["skipped_layout"]:
-            log("  Ignoradas (layout)     : %d" % report["skipped_layout"])
+            log("  Skipped (layout)     : %d" % report["skipped_layout"])
         log("")
-        log("Backup original em: %s" % os.path.basename(backup))
+        log("\nOriginal backup at: %s" % os.path.basename(backup))
     return report
 
 
@@ -1107,17 +1102,17 @@ def restore_original(pkg_path: str, log=None) -> None:
     backup = backup_path_for(pkg_path)
     if not os.path.isfile(backup):
         raise PatchError(
-            "Backup '%s' não encontrado. Não há o que restaurar."
+            "Backup '%s' not found. Nothing to restore."
             % os.path.basename(backup)
         )
     try:
         os.replace(backup, pkg_path)
     except PermissionError:
         raise PatchError(
-            "Não foi possível restaurar. Feche o Outlast e tente novamente."
+            "Could not restore. Close Outlast and try again."
         )
     except OSError as exc:
-        raise PatchError("Falha ao restaurar o OLGame.upk:\n%s" % exc)
+        raise PatchError("Failed to restore OLGame.upk:\n%s" % exc)
     _PATCHABLE_CACHE.clear()
     state = state_path_for(pkg_path)
     if os.path.isfile(state):
@@ -1126,7 +1121,7 @@ def restore_original(pkg_path: str, log=None) -> None:
         except OSError:
             pass
     if log:
-        log("Arquivo original restaurado (backup renomeado para OLGame.upk).")
+        log("Original file restored (backup renamed to OLGame.upk).")
 
 
 def package_status(pkg_path: str) -> dict:
@@ -1198,23 +1193,23 @@ class PatcherGUI:
         title.pack(anchor="w")
         subtitle = ttk.Label(
             outer,
-            text="Remove o balanço da câmera (head bob) das animações do Miles "
-                 "dentro do OLGame.upk.",
+            text="Removes camera shake (head bob) from Miles's animations inside "
+                 "OLGame.upk.",
             wraplength=780, justify="left",
         )
         subtitle.pack(anchor="w", pady=(2, 10))
 
-        file_box = ttk.LabelFrame(outer, text="Arquivo", padding=10)
+        file_box = ttk.LabelFrame(outer, text="File", padding=10)
         file_box.pack(fill="x", pady=(0, 10))
         self.file_label = ttk.Label(file_box, text=self.package_path, wraplength=760)
         self.file_label.pack(anchor="w")
         self.status_label = ttk.Label(file_box, text="", foreground="#555555")
         self.status_label.pack(anchor="w", pady=(4, 0))
 
-        bob_box = ttk.LabelFrame(outer, text="Balanço em repouso (respiração)", padding=10)
+        bob_box = ttk.LabelFrame(outer, text="Idle camera shake (breathing)", padding=10)
         bob_box.pack(fill="x", pady=(0, 10))
         self.breathing_check = ttk.Checkbutton(
-            bob_box, text="Remover o head bob de respiração?  (recomendado)",
+            bob_box, text="Remove breathing head bob?  (recommended)",
             variable=self.breathing_var, command=self._refresh_summary,
         )
         self.breathing_check.pack(anchor="w")
@@ -1224,7 +1219,7 @@ class PatcherGUI:
         )
         breathing_desc.pack(anchor="w", padx=(22, 0), pady=(2, 0))
 
-        mode_box = ttk.LabelFrame(outer, text="Modo de remoção do head bob", padding=10)
+        mode_box = ttk.LabelFrame(outer, text="Head bob removal mode", padding=10)
         mode_box.pack(fill="both", expand=False, pady=(0, 10))
         for mode in MODE_ORDER:
             frame = ttk.Frame(mode_box)
@@ -1249,15 +1244,15 @@ class PatcherGUI:
         buttons = ttk.Frame(outer)
         buttons.pack(fill="x", pady=(2, 10))
         self.apply_button = ttk.Button(
-            buttons, text="Aplicar alteracoes", command=self.on_apply,
+            buttons, text="Apply changes", command=self.on_apply,
             style="Accent.TButton",
         )
         self.apply_button.pack(side="left")
         self.restore_button = ttk.Button(
-            buttons, text="Restaurar arquivo original", command=self.on_restore
+            buttons, text="Restore original file", command=self.on_restore
         )
         self.restore_button.pack(side="left", padx=(8, 0))
-        self.quit_button = ttk.Button(buttons, text="Sair", command=self.on_quit)
+        self.quit_button = ttk.Button(buttons, text="Quit", command=self.on_quit)
         self.quit_button.pack(side="right")
 
         log_box = ttk.LabelFrame(outer, text="Log", padding=6)
@@ -1288,31 +1283,31 @@ class PatcherGUI:
         status = package_status(self.package_path)
         if not status["exists"]:
             self.status_label.configure(
-                text="OLGame.upk NÃO encontrado nesta pasta. Coloque o patcher "
-                     "dentro de CookedPCConsole.", foreground="#b00020"
+                text="OLGame.upk NOT found in this folder. Place the patcher "
+                     "inside CookedPCConsole.", foreground="#b00020"
             )
             return
         parts = ["OLGame.upk: %.1f MB" % (status["size"] / (1024 * 1024))]
         if status.get("compressed") is True:
-            parts.append("comprimido (será descomprimido ao aplicar)")
+            parts.append("compressed (will be decompressed on apply)")
         elif status.get("compressed") is False:
-            parts.append("descomprimido")
+            parts.append("uncompressed")
         if status["backup"]:
             parts.append("Backup: OK (%.1f MB)" % (status["backup_size"] / (1024 * 1024)))
         else:
-            parts.append("Backup: será criado na primeira aplicação")
+            parts.append("Backup: will be created on first application")
         if status["state"]:
             try:
                 with open(state_path_for(self.package_path), "r", encoding="utf-8") as handle:
                     state = json.load(handle)
-                parts.append("Patch atual: %s%s" % (
+                parts.append("Current patch: %s%s" % (
                     state.get("mode_label", state.get("mode", "?")),
-                    " + respiração" if state.get("breathing") else "",
+                    " + breathing" if state.get("breathing") else "",
                 ))
             except Exception:
-                parts.append("Patch aplicado")
+                parts.append("Patch applied")
         else:
-            parts.append("Patch: não aplicado")
+            parts.append("Patch: not applied")
         self.status_label.configure(text="   |   ".join(parts), foreground="#333333")
 
     def _refresh_summary(self):
@@ -1327,9 +1322,9 @@ class PatcherGUI:
         }
         without_idle, with_idle = counts.get(mode, (0, 0))
         total = with_idle if breathing else without_idle
-        extra = " + respiração" if breathing else ""
+        extra = " + breathing" if breathing else ""
         self.summary_label.configure(
-            text="Selecionado: %s%s  (~%d animações)." %
+            text="Selected: %s%s  (~%d animations)." %
                  (MODE_LABELS[mode], extra, total)
         )
 
@@ -1346,21 +1341,21 @@ class PatcherGUI:
         if self.busy:
             return
         if not os.path.isfile(self.package_path):
-            self.messagebox.showerror(APP_TITLE, "OLGame.upk não encontrado nesta pasta.")
+            self.messagebox.showerror(APP_TITLE, "OLGame.upk not found in this folder.")
             return
         mode = self.mode_var.get()
         breathing = bool(self.breathing_var.get())
         total = self.summary_label.cget("text")
         answer = self.messagebox.askyesno(
             APP_TITLE,
-            "Aplicar as alterações?\n\n%s\n\nO backup do OLGame.upk original será "
-            "criado (se ainda não existir). Feche o jogo antes de continuar." % total,
+            "Apply changes?\n\n%s\n\nA backup of the original OLGame.upk will be "
+            "created (if it doesn't exist yet). Close the game before continuing." % total,
         )
         if not answer:
             return
         self._set_busy(True)
         self.log("")
-        self.log("=== Aplicando patch ===")
+        self.log("=== Applying patch ===")
         threading.Thread(
             target=self._apply_worker, args=(mode, breathing), daemon=True
         ).start()
@@ -1385,19 +1380,19 @@ class PatcherGUI:
         backup = backup_path_for(self.package_path)
         if not os.path.isfile(backup):
             self.messagebox.showinfo(
-                APP_TITLE, "Não existe backup (OLGame.upk.backup) para restaurar."
+                APP_TITLE, "No backup (OLGame.upk.backup) to restore."
             )
             return
         answer = self.messagebox.askyesno(
             APP_TITLE,
-            "Restaurar o OLGame.upk original?\n\nO backup será renomeado para "
-            "OLGame.upk, substituindo o arquivo modificado. Feche o jogo antes.",
+            "Restore original OLGame.upk?\n\nThe backup will be renamed to "
+            "OLGame.upk, replacing the modified file. Close the game before.",
         )
         if not answer:
             return
         self._set_busy(True)
         self.log("")
-        self.log("=== Restaurando arquivo original ===")
+        self.log("=== Restoring original file ===")
         threading.Thread(target=self._restore_worker, daemon=True).start()
 
     def _restore_worker(self):
@@ -1413,7 +1408,7 @@ class PatcherGUI:
 
     def on_quit(self):
         if self.busy:
-            self.messagebox.showinfo(APP_TITLE, "Aguarde a operação terminar.")
+            self.messagebox.showinfo(APP_TITLE, "Please wait for the operation to finish.")
             return
         self.root.destroy()
 
@@ -1429,18 +1424,18 @@ class PatcherGUI:
                     self.messagebox.showerror(APP_TITLE, payload)
                     self.refresh_status()
                 elif kind == "apply_done":
-                    self.log("Concluído.")
+                    self.log("Done.")
                     self.messagebox.showinfo(
                         APP_TITLE,
-                        "Patch aplicado com sucesso!\n\nAbra o jogo e teste. "
-                        "Para voltar ao original use 'Restaurar arquivo original'.",
+                        "Patch applied successfully!\n\nOpen the game and test it. "
+                        "To revert, use 'Restore original file'.",
                     )
                     self.refresh_status()
                 elif kind == "restore_done":
-                    self.log("Restauracao concluida.")
+                    self.log("Restore complete.")
                     self.messagebox.showinfo(
                         APP_TITLE,
-                        "OLGame.upk original restaurado com sucesso.",
+                        "Original OLGame.upk restored successfully.",
                     )
                     self.refresh_status()
                 elif kind == "busy":
@@ -1467,12 +1462,12 @@ def run_cli(args) -> int:
         if args.analyze:
             data = load_patchable_bytes(package, base_dir, log)
             stats = analyze_bytes(data)
-            print("Animações do herói : %d" % stats["tracks"])
-            print("Com balanço        : %d" % stats["varying"])
+            print("Hero animations : %d" % stats["tracks"])
+            print("With bob          : %d" % stats["varying"])
             return 0
 
         if not args.mode:
-            print("ERRO: informe --mode (%s) ou use --analyze/--restore." %
+            print("ERROR: specify --mode (%s) or use --analyze/--restore." %
                   ", ".join(MODE_ORDER))
             return 2
 
@@ -1486,12 +1481,12 @@ def run_cli(args) -> int:
         with open(output, "wb") as handle:
             handle.write(patched)
         print("")
-        print("Patch gravado em: %s (%d bytes)" % (output, len(patched)))
+        print("Patch written to: %s (%d bytes)" % (output, len(patched)))
         for key, value in report.items():
             print("  %-32s %s" % (key, value))
         return 0
     except PatchError as exc:
-        print("ERRO: %s" % exc, file=sys.stderr)
+        print("ERROR: %s" % exc, file=sys.stderr)
         return 1
 
 
@@ -1499,16 +1494,16 @@ def main(argv=None) -> int:
     parser = argparse.ArgumentParser(
         description="Remove o head bob do Outlast editando OLGame.upk.",
     )
-    parser.add_argument("--cli", action="store_true", help="usa a linha de comando")
-    parser.add_argument("--package", help="caminho do OLGame.upk")
-    parser.add_argument("--mode", choices=MODE_ORDER, help="modo de remoção")
+    parser.add_argument("--cli", action="store_true", help="uses the command line")
+    parser.add_argument("--package", help="path to OLGame.upk")
+    parser.add_argument("--mode", choices=MODE_ORDER, help="removal mode")
     parser.add_argument("--breathing", action="store_true",
-                        help="remove também o balanço de respiração (idle)")
-    parser.add_argument("--output", help="grava o patch em outro arquivo (não mexe no original)")
+                        help="also removes breathing shake (idle)")
+    parser.add_argument("--output", help="writes patch to another file (does not touch the original)")
     parser.add_argument("--apply", action="store_true",
-                        help="aplica no OLGame.upk (cria backup automaticamente)")
-    parser.add_argument("--restore", action="store_true", help="restaura o backup")
-    parser.add_argument("--analyze", action="store_true", help="mostra estatisticas do pacote")
+                        help="applies to OLGame.upk (creates backup automatically)")
+    parser.add_argument("--restore", action="store_true", help="restores the backup")
+    parser.add_argument("--analyze", action="store_true", help="shows package statistics")
     args = parser.parse_args(argv)
 
     if args.cli or args.mode or args.apply or args.restore or args.analyze:
@@ -1517,7 +1512,7 @@ def main(argv=None) -> int:
     try:
         import tkinter as tk
     except ImportError:
-        print("tkinter não está disponível. Use o modo --cli.", file=sys.stderr)
+        print("tkinter is not available. Use the --cli mode.", file=sys.stderr)
         return 1
 
     root = tk.Tk()

@@ -58,7 +58,9 @@ a contagem real no log ao aplicar.
 - Na primeira aplicacao o patcher cria **`OLGame.upk.backup`** com o arquivo
   original, e so o cria **uma vez** (nunca sobrescreve um backup existente).
 - Se ja existir um backup, ele e usado como fonte limpa: aplicar de novo com
-  outro modo **nao** empilha patches.
+  outro modo **nao** empilha patches. O patcher **restaura automaticamente o
+  `OLGame.upk` a partir do backup** antes de aplicar a nova configuracao, então
+  nao e preciso clicar em "Restaurar arquivo original" ao trocar de modo.
 - Se o backup estiver ausente mas o `OLGame.upk` aparentar ja estar modificado
   (um grupo inteiro de animacoes sem balanco), o patcher **se recusa** a criar
   backup e pede para verificar os arquivos na Steam.

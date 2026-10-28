@@ -1049,15 +1049,107 @@ def apply_patch(pkg_path: str, mode: str, breathing: bool, base_dir: str, log=No
         raise PatchError("OLGame.upk not found at:\n%s" % pkg_path)
     if not os.access(pkg_path, os.R_OK):
         raise PatchError("No read permission on OLGame.upk.")
+    if not os.access(pkg_path, os.W_OK):
+        raise PatchError("No write permission on OLGame.upk.")
 
-    backup = ensure_backup(pkg_path, base_dir, log)
+    backup = backup_path_for(pkg_path)
+    state = state_path_for(pkg_path)
+    source_data = None
 
-    if log:
-        log("Reading original backup...")
-    source_data = load_patchable_bytes(backup, base_dir, log)
+    if os.path.isfile(backup):
+        # Backup ja existe: verificar que ele esta limpo (nao modificado).
+        if os.path.getsize(backup) <= 0:
+            raise PatchError("Backup exists but is empty. Restore the game via Steam.")
+        if log:
+            log("Verifying existing backup...")
+        try:
+            backup_data = load_patchable_bytes(backup, base_dir, log)
+            backup_stats = analyze_bytes(backup_data)
+        except PatchError:
+            raise
+        except Exception as exc:
+            raise PatchError(
+                "Could not read existing backup '%s'.\n\nError: %s"
+                % (os.path.basename(backup), exc)
+            )
+        if backup_stats["patched"]:
+            raise PatchError(
+                "Backup '%s' appears to already be modified (an entire group of "
+                "animations has no bob).\n\nDelete the backup and restore "
+                "OLGame.upk via Steam before continuing."
+                % os.path.basename(backup)
+            )
 
-    if log:
-        log("Applying patch (mode=%s, breathing=%s)..." % (mode, "yes" if breathing else "no"))
+        # Restaurar explicitamente o OLGame.upk a partir do backup, desfazendo
+        # qualquer aplicacao anterior antes de aplicar a nova configuracao.
+        if log:
+            log("Restoring OLGame.upk from backup before applying new configuration...")
+        try:
+            _write_atomic(pkg_path, backup_data)
+        except PermissionError:
+            raise PatchError(
+                "Could not write OLGame.upk. Close Outlast (and Steam, if "
+                "the game is open) and try again."
+            )
+        except OSError as exc:
+            raise PatchError("Failed to restore OLGame.upk from backup:\n%s" % exc)
+
+        # Ja temos os bytes originais (descomprimidos, se necessario) em memoria;
+        # reusa-los evita descompactar o backup novamente.
+        source_data = backup_data
+    else:
+        # Nao existe backup ainda: criar a partir do OLGame.upk atual, que deve
+        # ser o original do jogo.
+        if os.path.isfile(state):
+            raise PatchError(
+                "A previous patch record exists, but backup '%s' was not "
+                "found.\n\nRestore OLGame.upk via Steam (Verify integrity "
+                "of game files) before continuing."
+                % os.path.basename(backup)
+            )
+
+        if log:
+            log("Verifying original OLGame.upk before creating backup...")
+        try:
+            data = load_patchable_bytes(pkg_path, base_dir, log)
+            stats = analyze_bytes(data)
+        except PatchError:
+            raise
+        except Exception as exc:
+            raise PatchError(
+                "Could not read OLGame.upk.\n\nError: %s" % exc
+            )
+        if stats["patched"]:
+            raise PatchError(
+                "Current OLGame.upk appears to already be modified (an entire group "
+                "of animations has no bob) and no backup exists.\n\n"
+                "Restore the game via Steam (Verify integrity of game files) "
+                "before applying the patch."
+            )
+
+        if log:
+            log("Creating backup: %s" % os.path.basename(backup))
+        shutil.copy2(pkg_path, backup)
+
+        with open(pkg_path, "rb") as handle:
+            original_hash = _sha1(handle.read())
+        with open(backup, "rb") as handle:
+            backup_hash = _sha1(handle.read())
+        if original_hash != backup_hash:
+            raise PatchError("Failed to create backup (hash mismatch). Nothing was changed.")
+
+        try:
+            backup_stat = os.stat(backup)
+            _PATCHABLE_CACHE.clear()
+            _PATCHABLE_CACHE[(os.path.abspath(backup), backup_stat.st_size,
+                              backup_stat.st_mtime_ns)] = data
+        except OSError:
+            pass
+
+        if log:
+            log("Backup created successfully.")
+        source_data = data
+
     patched_data, report = patch_bytes(source_data, mode, breathing, log)
 
     if log:
@@ -1072,7 +1164,7 @@ def apply_patch(pkg_path: str, mode: str, breathing: bool, base_dir: str, log=No
     except OSError as exc:
         raise PatchError("Failed to write OLGame.upk:\n%s" % exc)
 
-    state = {
+    state_obj = {
         "app_version": APP_VERSION,
         "applied_at": time.strftime("%Y-%m-%d %H:%M:%S"),
         "mode": mode,
@@ -1082,7 +1174,7 @@ def apply_patch(pkg_path: str, mode: str, breathing: bool, base_dir: str, log=No
         "report": report,
     }
     with open(state_path_for(pkg_path), "w", encoding="utf-8") as handle:
-        json.dump(state, handle, ensure_ascii=False, indent=2)
+        json.dump(state_obj, handle, ensure_ascii=False, indent=2)
 
     if log:
         log("")
@@ -1349,7 +1441,9 @@ class PatcherGUI:
         answer = self.messagebox.askyesno(
             APP_TITLE,
             "Apply changes?\n\n%s\n\nA backup of the original OLGame.upk will be "
-            "created (if it doesn't exist yet). Close the game before continuing." % total,
+            "created (if it doesn't exist yet). If a backup already exists, the "
+            "current file will be restored from it before applying the new "
+            "configuration. Close the game before continuing." % total,
         )
         if not answer:
             return

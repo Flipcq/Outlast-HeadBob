@@ -82,11 +82,15 @@ O `OLGame.upk` do Outlast e um pacote UE3 **comprimido**. Para editar, o patcher
 usa o `decompress.exe` incluido para gerar uma copia descomprimida, aplica o
 patch e grava essa copia como `OLGame.upk`.
 
-- O jogo aceita pacotes UE3 nao comprimidos (e o mesmo formato que mods de
-  Outlast feitos no UDK usam).
+- O pacote final fica **nao comprimido** (o `decompress.exe` limpa o flag de
+  compressao do cabecalho). E o mesmo tipo de pacote que o UE3 usa para mods
+  cookados no UDK; o engine carrega pacotes assim normalmente.
 - O arquivo final fica maior (~85 MB em vez de ~64 MB); isso e normal.
 - O backup mantem o arquivo original comprimido, entao `Restaurar` devolve o
-  jogo ao estado de fabrica.
+  jogo ao estado de fabrica caso algo nao funcione.
+- Se o jogo nao abrir com o pacote descomprimido (nao e esperado), use
+  **Restaurar arquivo original** e avise para ajustarmos o fluxo de
+  recompressao.
 
 ---
 

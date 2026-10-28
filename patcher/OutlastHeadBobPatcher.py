@@ -819,53 +819,58 @@ def _find_decompress_exe(base_dir: str) -> str:
 def _run_decompressor(pkg_path: str, base_dir: str, log) -> bytes:
     exe = _find_decompress_exe(base_dir)
     temp_dir = tempfile.mkdtemp(prefix="outlast_headbob_")
-    local_pkg = os.path.join(temp_dir, os.path.basename(pkg_path))
-    shutil.copy2(pkg_path, local_pkg)
-    out_dir = os.path.join(temp_dir, "out")
-    os.makedirs(out_dir, exist_ok=True)
+    try:
+        local_pkg = os.path.join(temp_dir, os.path.basename(pkg_path))
+        shutil.copy2(pkg_path, local_pkg)
+        out_dir = os.path.join(temp_dir, "out")
+        os.makedirs(out_dir, exist_ok=True)
 
-    if log:
-        log("OLGame.upk comprimido: descomprimindo com decompress.exe...")
+        if log:
+            log("OLGame.upk comprimido: descomprimindo com decompress.exe...")
 
-    creationflags = 0x08000000 if os.name == "nt" else 0  # CREATE_NO_WINDOW
-    attempts = [
-        [exe, "-out=" + out_dir, local_pkg],
-        [exe, local_pkg],
-    ]
-    last_output = ""
-    for cmd in attempts:
-        try:
-            proc = subprocess.run(
-                cmd, cwd=temp_dir, stdout=subprocess.PIPE,
-                stderr=subprocess.STDOUT, creationflags=creationflags, timeout=600,
-            )
-            last_output = (proc.stdout or b"").decode("latin-1", "replace")
-        except (OSError, subprocess.SubprocessError) as exc:
-            last_output = str(exc)
-            continue
+        creationflags = 0x08000000 if os.name == "nt" else 0  # CREATE_NO_WINDOW
+        attempts = [
+            [exe, "-out=" + out_dir, local_pkg],
+            [exe, local_pkg],
+        ]
+        last_output = ""
+        for cmd in attempts:
+            try:
+                proc = subprocess.run(
+                    cmd, cwd=temp_dir, stdout=subprocess.PIPE,
+                    stderr=subprocess.STDOUT, creationflags=creationflags,
+                    timeout=600,
+                )
+                last_output = (proc.stdout or b"").decode("latin-1", "replace")
+            except (OSError, subprocess.SubprocessError) as exc:
+                last_output = str(exc)
+                continue
 
-        for root, _dirs, files in os.walk(temp_dir):
-            for filename in files:
-                if not filename.lower().endswith(".upk"):
-                    continue
-                candidate = os.path.join(root, filename)
-                if os.path.abspath(candidate) == os.path.abspath(local_pkg):
-                    continue
-                try:
-                    with open(candidate, "rb") as handle:
-                        candidate_data = handle.read()
-                    header = read_package_header(candidate_data)
-                except Exception:
-                    continue
-                if not header["compressed"]:
-                    if log:
-                        log("Descompactado: %s (%d bytes)" % (candidate, len(candidate_data)))
-                    return candidate_data
+            for root, _dirs, files in os.walk(temp_dir):
+                for filename in files:
+                    if not filename.lower().endswith(".upk"):
+                        continue
+                    candidate = os.path.join(root, filename)
+                    if os.path.abspath(candidate) == os.path.abspath(local_pkg):
+                        continue
+                    try:
+                        with open(candidate, "rb") as handle:
+                            candidate_data = handle.read()
+                        header = read_package_header(candidate_data)
+                    except Exception:
+                        continue
+                    if not header["compressed"]:
+                        if log:
+                            log("Descompactado: %s (%d bytes)" %
+                                (candidate, len(candidate_data)))
+                        return candidate_data
 
-    raise PatchError(
-        "Não foi possível descomprimir o OLGame.upk.\n\n"
-        "Saida do decompress.exe:\n%s" % (last_output[-1500:] or "(vazia)")
-    )
+        raise PatchError(
+            "Não foi possível descomprimir o OLGame.upk.\n\n"
+            "Saída do decompress.exe:\n%s" % (last_output[-1500:] or "(vazia)")
+        )
+    finally:
+        shutil.rmtree(temp_dir, ignore_errors=True)
 
 
 _PATCHABLE_CACHE = {}

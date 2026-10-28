@@ -18,8 +18,9 @@ arquivo original e permite restaurar tudo depois.
 4. Escolha as opcoes e clique em **Aplicar alteracoes**.
 5. Abra o jogo. Para voltar ao original, use **Restaurar arquivo original**.
 
-> O `decompress.exe` (Gildor's PackageUnpack) deve continuar ao lado do
-> patcher: ele e usado somente se o `OLGame.upk` estiver comprimido.
+> O `decompress.exe` (Gildor's PackageUnpack) deve continuar na **mesma pasta**
+> que o patcher (ou seja, dentro de `CookedPCConsole/`): ele e usado somente se
+> o `OLGame.upk` estiver comprimido.
 
 ### Requisitos
 

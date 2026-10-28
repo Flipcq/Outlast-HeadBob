@@ -807,18 +807,33 @@ def _sha1(data: bytes) -> str:
 
 
 def _find_decompress_exe(base_dir: str) -> str:
-    candidates = [
-        os.path.join(base_dir, DECOMPRESS_NAME),
-        os.path.join(base_dir, "bin", DECOMPRESS_NAME),
-        os.path.join(os.path.dirname(os.path.abspath(__file__)), DECOMPRESS_NAME),
-    ]
-    for candidate in candidates:
-        if os.path.isfile(candidate):
-            return candidate
+    """Localiza o decompress.exe ao lado do patcher ou do executável."""
+    tried = []
+    # Pasta do script / executável atual
+    script_dir = os.path.dirname(os.path.abspath(__file__))
+    # Quando rodando como PyInstaller onefile, sys.executable é o .exe externo
+    exe_dir = os.path.dirname(os.path.abspath(sys.executable))
+    candidate_dirs = [base_dir, script_dir, exe_dir]
+    seen_dirs = set()
+    for d in candidate_dirs:
+        if d in seen_dirs:
+            continue
+        seen_dirs.add(d)
+        tried.append(os.path.join(d, DECOMPRESS_NAME))
+        if os.path.isfile(os.path.join(d, DECOMPRESS_NAME)):
+            return os.path.join(d, DECOMPRESS_NAME)
+        tried.append(os.path.join(d, "bin", DECOMPRESS_NAME))
+        if os.path.isfile(os.path.join(d, "bin", DECOMPRESS_NAME)):
+            return os.path.join(d, "bin", DECOMPRESS_NAME)
+
     raise PatchError(
         "O OLGame.upk está comprimido e o '%s' não foi encontrado.\n\n"
+        "Caminhos verificados:\n%s\n\n"
         "Coloque o decompress.exe (Gildor's PackageUnpack, incluido na pasta "
-        "do patcher) ao lado deste programa e tente novamente." % DECOMPRESS_NAME
+        "do patcher) na mesma pasta que este programa e tente novamente." % (
+            DECOMPRESS_NAME,
+            "\n".join("  - " + c for c in tried),
+        )
     )
 
 

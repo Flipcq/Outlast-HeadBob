@@ -10,6 +10,7 @@ py -3 -m pip install --upgrade pyinstaller
 if errorlevel 1 goto :error
 
 py -3 -m PyInstaller --noconfirm --onefile --windowed ^
+    --icon "camera_icon.ico" ^
     --name "OutlastHeadBobPatcher" ^
     OutlastHeadBobPatcher.py
 if errorlevel 1 goto :error

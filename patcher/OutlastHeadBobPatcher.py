@@ -724,8 +724,23 @@ def patch_bytes(data: bytes, mode: str, breathing: bool, log=None) -> tuple:
     if mode not in MODE_LABELS:
         raise PatchError("Modo invalido: %s" % mode)
 
-    pkg = UpkPackage(data)
-    tracks = list_camera_tracks(pkg)
+    try:
+        pkg = UpkPackage(data)
+    except PatchError:
+        raise
+    except Exception as exc:
+        raise PatchError(
+            "Não foi possível ler o OLGame.upk como pacote UE3.\\n\\nErro: %s" % exc
+        )
+
+    try:
+        tracks = list_camera_tracks(pkg)
+    except PatchError:
+        raise
+    except Exception as exc:
+        raise PatchError(
+            "Não foi possível localizar as animações da câmera no OLGame.upk.\\n\\nErro: %s" % exc
+        )
     if not tracks:
         raise PatchError("Nenhuma animação do herói foi encontrada no pacote.")
 
@@ -907,9 +922,22 @@ def load_patchable_bytes(path: str, base_dir: str, log=None) -> bytes:
     if key is not None and key in _PATCHABLE_CACHE:
         return _PATCHABLE_CACHE[key]
 
-    with open(path, "rb") as handle:
-        data = handle.read()
-    header = read_package_header(data)
+    try:
+        with open(path, "rb") as handle:
+            data = handle.read()
+    except OSError as exc:
+        raise PatchError("Não foi possível abrir o OLGame.upk: %s" % exc)
+
+    try:
+        header = read_package_header(data)
+    except PatchError as exc:
+        raise PatchError(
+            "Cabeçalho do OLGame.upk inválido (não parece um .upk do Outlast).\\n\\nErro: %s" % exc
+        )
+    except Exception as exc:
+        raise PatchError(
+            "Não foi possível ler o cabeçalho do OLGame.upk.\\n\\nErro: %s" % exc
+        )
     if header["compressed"]:
         data = _run_decompressor(path, base_dir, log)
 
@@ -951,12 +979,20 @@ def ensure_backup(pkg_path: str, base_dir: str, log=None) -> str:
             raise PatchError("O backup existe mas esta vazio. Restaure o jogo pela Steam.")
         if log:
             log("Verificando o backup existente...")
-        backup_data = load_patchable_bytes(backup, base_dir, log)
-        backup_stats = analyze_bytes(backup_data)
+        try:
+            backup_data = load_patchable_bytes(backup, base_dir, log)
+            backup_stats = analyze_bytes(backup_data)
+        except PatchError:
+            raise
+        except Exception as exc:
+            raise PatchError(
+                "Não foi possível ler o backup existente '%s'.\\n\\nErro: %s"
+                % (os.path.basename(backup), exc)
+            )
         if backup_stats["patched"]:
             raise PatchError(
                 "O backup '%s' parece ja estar modificado (um grupo inteiro de "
-                "animações está sem balanço).\n\nApague o backup e restaure o "
+                "animações está sem balanço).\\n\\nApague o backup e restaure o "
                 "OLGame.upk pela Steam antes de continuar."
                 % os.path.basename(backup)
             )
@@ -965,18 +1001,25 @@ def ensure_backup(pkg_path: str, base_dir: str, log=None) -> str:
     if os.path.isfile(state):
         raise PatchError(
             "Existe um registro de patch anterior, mas o backup '%s' não foi "
-            "encontrado.\n\nRestaure o OLGame.upk pela Steam (Verificar "
+            "encontrado.\\n\\nRestaure o OLGame.upk pela Steam (Verificar "
             "integridade dos arquivos) antes de continuar." % os.path.basename(backup)
         )
 
     if log:
         log("Verificando o OLGame.upk original antes de criar o backup...")
-    data = load_patchable_bytes(pkg_path, base_dir, log)
-    stats = analyze_bytes(data)
+    try:
+        data = load_patchable_bytes(pkg_path, base_dir, log)
+        stats = analyze_bytes(data)
+    except PatchError:
+        raise
+    except Exception as exc:
+        raise PatchError(
+            "Não foi possível ler o OLGame.upk.\\n\\nErro: %s" % exc
+        )
     if stats["patched"]:
         raise PatchError(
             "O OLGame.upk atual parece ja ter sido modificado (um grupo inteiro "
-            "de animações está sem balanço) e não existe backup.\n\n"
+            "de animações está sem balanço) e não existe backup.\\n\\n"
             "Restaure o jogo pela Steam (Verificar integridade dos arquivos) "
             "antes de aplicar o patch."
         )

@@ -762,6 +762,12 @@ def patch_bytes(data: bytes, mode: str, breathing: bool, log=None) -> tuple:
         if changed:
             patched += 1
 
+    if selected and skipped_layout == len(selected):
+        raise PatchError(
+            "Nenhuma das animações selecionadas usa o formato de tracks "
+            "esperado. O OLGame.upk pode ser de outra versão do jogo."
+        )
+
     # Verificacao: nada selecionado pode continuar balancando.
     for track in selected:
         if not track.layout_ok:
@@ -959,6 +965,15 @@ def ensure_backup(pkg_path: str, base_dir: str, log=None) -> str:
         backup_hash = _sha1(handle.read())
     if original_hash != backup_hash:
         raise PatchError("Falha ao criar o backup (hash diferente). Nada foi alterado.")
+
+    # Reaproveita os bytes ja descomprimidos/analisados na aplicacao seguinte.
+    try:
+        backup_stat = os.stat(backup)
+        _PATCHABLE_CACHE.clear()
+        _PATCHABLE_CACHE[(os.path.abspath(backup), backup_stat.st_size,
+                          backup_stat.st_mtime_ns)] = data
+    except OSError:
+        pass
 
     if log:
         log("Backup criado com sucesso.")
@@ -1236,8 +1251,8 @@ class PatcherGUI:
         breathing = bool(self.breathing_var.get())
         counts = {
             "default": (12, 36),
-            "walk_run_all": (51, 75),
-            "walk": (41, 65),
+            "walk_run_all": (51, 74),
+            "walk": (41, 64),
             "run": (10, 34),
             "all": (360, 360),
         }

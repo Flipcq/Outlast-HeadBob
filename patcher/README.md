@@ -119,6 +119,10 @@ python OutlastHeadBobPatcher.py --cli --package OLGame.upk --restore
    contem as animacoes), acha o indice da bone `Hero-Camera` em
    `TrackBoneNames` e achata os keyframes de translacao e rotacao dessa bone
    somente nas animacoes escolhidas.
+5. No esqueleto (`RefSkeleton` de `Miles_beheaded`), a `Hero-Camera` e filha do
+   `Hero-Root` (indice 0), **nao** da cabeca/pescoco. Por isso a animacao do
+   corpo nao move a camera: toda a oscilacao visivel vem da track local da
+   camera, e achatá-la remove o head bob por completo sem congelar o corpo.
 
 Formato usado (UE3 per-track compression, Outlast):
 

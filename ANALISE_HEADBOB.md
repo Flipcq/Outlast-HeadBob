@@ -61,6 +61,15 @@ Medicoes feitas no pacote PC:
 | `player_stand_idle` | Y 20.51..21.07, Z 168.19..168.54 (~0.35 uu) | 0.64 graus |
 | `player_stand_breathe_idle` | respiracao | 5.45 graus |
 
+Outro detalhe importante do esqueleto (`Miles_beheaded`, dentro do OLGame.upk):
+a bone `Hero-Camera` e a **bone 1** do `RefSkeleton` e seu **parent e o
+`Hero-Root` (indice 0)**, com posicao de repouso
+`(-0.23, 14.67, 168.46)` e rotacao ~-90 graus em Z. Ou seja, a camera **nao e
+filha da cabeca/pescoco**: ela e filha da raiz. Isso significa que a animacao
+do corpo (spine, neck, head, bracos) **nao** move a camera; todo o balanco
+visivel vem da track local da propria `Hero-Camera`. Por isso achatar essa
+track remove o head bob por completo, sem congelar a animacao do corpo.
+
 A 100 uu/metro (escala medida do jogo), 1 uu = 1 cm. O bob vertical da
 caminhada e ~1,2 cm; o da corrida ~1,6 cm. O idle mexe pouco em posicao, mas a
 rotacao da respiracao chega a ~5 graus no `player_stand_breathe_idle`.

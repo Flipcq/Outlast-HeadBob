@@ -1042,9 +1042,17 @@ def restore_original(pkg_path: str, log=None) -> None:
 
 def package_status(pkg_path: str) -> dict:
     backup = backup_path_for(pkg_path)
+    compressed = None
+    if os.path.isfile(pkg_path):
+        try:
+            with open(pkg_path, "rb") as handle:
+                compressed = read_package_header(handle.read(64))["compressed"]
+        except Exception:
+            compressed = None
     return {
         "exists": os.path.isfile(pkg_path),
         "size": os.path.getsize(pkg_path) if os.path.isfile(pkg_path) else 0,
+        "compressed": compressed,
         "backup": os.path.isfile(backup),
         "backup_size": os.path.getsize(backup) if os.path.isfile(backup) else 0,
         "state": os.path.isfile(state_path_for(pkg_path)),
@@ -1196,6 +1204,10 @@ class PatcherGUI:
             )
             return
         parts = ["OLGame.upk: %.1f MB" % (status["size"] / (1024 * 1024))]
+        if status.get("compressed") is True:
+            parts.append("comprimido (será descomprimido ao aplicar)")
+        elif status.get("compressed") is False:
+            parts.append("descomprimido")
         if status["backup"]:
             parts.append("Backup: OK (%.1f MB)" % (status["backup_size"] / (1024 * 1024)))
         else:

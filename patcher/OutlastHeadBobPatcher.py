@@ -1057,35 +1057,16 @@ def apply_patch(pkg_path: str, mode: str, breathing: bool, base_dir: str, log=No
     source_data = None
 
     if os.path.isfile(backup):
-        # Backup ja existe: verificar que ele esta limpo (nao modificado).
+        # Backup ja existe: restaurar explicitamente o OLGame.upk a partir dele
+        # para desfazer qualquer aplicacao anterior antes de aplicar a nova
+        # configuracao. Copiamos o backup para o caminho com nome .upk (correto)
+        # para que o decompressor funcione se o arquivo estiver comprimido.
         if os.path.getsize(backup) <= 0:
             raise PatchError("Backup exists but is empty. Restore the game via Steam.")
         if log:
-            log("Verifying existing backup...")
-        try:
-            backup_data = load_patchable_bytes(backup, base_dir, log)
-            backup_stats = analyze_bytes(backup_data)
-        except PatchError:
-            raise
-        except Exception as exc:
-            raise PatchError(
-                "Could not read existing backup '%s'.\n\nError: %s"
-                % (os.path.basename(backup), exc)
-            )
-        if backup_stats["patched"]:
-            raise PatchError(
-                "Backup '%s' appears to already be modified (an entire group of "
-                "animations has no bob).\n\nDelete the backup and restore "
-                "OLGame.upk via Steam before continuing."
-                % os.path.basename(backup)
-            )
-
-        # Restaurar explicitamente o OLGame.upk a partir do backup, desfazendo
-        # qualquer aplicacao anterior antes de aplicar a nova configuracao.
-        if log:
             log("Restoring OLGame.upk from backup before applying new configuration...")
         try:
-            _write_atomic(pkg_path, backup_data)
+            shutil.copy2(backup, pkg_path)
         except PermissionError:
             raise PatchError(
                 "Could not write OLGame.upk. Close Outlast (and Steam, if "
@@ -1094,9 +1075,25 @@ def apply_patch(pkg_path: str, mode: str, breathing: bool, base_dir: str, log=No
         except OSError as exc:
             raise PatchError("Failed to restore OLGame.upk from backup:\n%s" % exc)
 
-        # Ja temos os bytes originais (descomprimidos, se necessario) em memoria;
-        # reusa-los evita descompactar o backup novamente.
-        source_data = backup_data
+        # Agora le o arquivo restaurado (nome .upk, descomprime se necessario)
+        # e verifica que a fonte esta limpa (nao ja modificada).
+        if log:
+            log("Verifying restored OLGame.upk...")
+        try:
+            source_data = load_patchable_bytes(pkg_path, base_dir, log)
+            stats = analyze_bytes(source_data)
+        except PatchError:
+            raise
+        except Exception as exc:
+            raise PatchError(
+                "Could not read restored OLGame.upk.\n\nError: %s" % exc
+            )
+        if stats["patched"]:
+            raise PatchError(
+                "Restored OLGame.upk appears to already be modified (an entire group "
+                "of animations has no bob).\n\nDelete the backup and restore "
+                "OLGame.upk via Steam before continuing."
+            )
     else:
         # Nao existe backup ainda: criar a partir do OLGame.upk atual, que deve
         # ser o original do jogo.
